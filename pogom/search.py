@@ -37,7 +37,8 @@ from sets import Set
 from pgoapi import PGoApi
 from pgoapi.utilities import f2i
 from pgoapi import utilities as util
-from pgoapi.exceptions import AuthException
+from pgoapi.exceptions import AuthException, HashingQuotaExceededException
+from pgoapi.hash_server import HashServer
 
 from .models import parse_map, GymDetails, parse_gyms, MainWorker, WorkerStatus
 from .fakePogoApi import FakePogoApi
@@ -347,7 +348,7 @@ def search_overseer_thread(args, new_location_queue, pause_bit, heartb, db_updat
     # Create the key scheduler.
     if args.hash_key:
         log.info('Enabling hashing key scheduler...')
-        key_scheduler = schedulers.KeyScheduler(args.hash_key).scheduler()
+        key_scheduler = schedulers.KeyScheduler(args.hash_key)
 
     # Create specified number of search_worker_thread.
     log.info('Starting search worker threads...')
@@ -376,6 +377,9 @@ def search_overseer_thread(args, new_location_queue, pause_bit, heartb, db_updat
             'fail': 0,
             'noitems': 0,
             'skip': 0,
+            'hash_key': 0,
+            'maximum_rpm': 0,
+            'rpm_left': 0,
             'captcha': 0,
             'username': '',
             'proxy_display': proxy_display,
@@ -621,6 +625,9 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
             status['success'] = 0
             status['noitems'] = 0
             status['skip'] = 0
+            status['hash_key'] = 0
+            status['maximum_rpm'] = 0
+            status['rpm_left'] = 0
             status['captcha'] = 0
 
             stagger_thread(args, account)
@@ -866,13 +873,30 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
                     if parsed['count'] > 0:
                         status['success'] += 1
                         consecutive_noitems = 0
-                    else:
-                        status['noitems'] += 1
-                        consecutive_noitems += 1
-                    consecutive_fails = 0
-                    status['message'] = 'Search at {:6f},{:6f} completed with {} finds.'.format(
-                        step_location[0], step_location[1], parsed['count'])
-                    log.debug(status['message'])
+                    # Check for used Hash Key and request Header from api
+                        if (key_scheduler):
+                            if (key == key_scheduler.current_key()):
+                                status['hash_key'] = key_scheduler.current_key()
+                                maximum = HashServer.status.get('maximum')
+                                status['maximum_rpm'] = maximum
+                                try:
+                                    request = api.create_request()
+                                    remaining = HashServer.status.get('remaining')
+                                    request.call()
+                                    status['rpm_left'] = remaining
+                                    log.info('Hash Key {} has {}/{} RPM left.'.format(key, remaining, maximum))
+                                except HashingQuotaExceededException:
+                                    status['message'] = 'Hash Key {} exceeded RPM! {}.'.format(key)
+                                    log.info(status['message'])
+
+                        else:
+                            status['noitems'] += 1
+                            consecutive_noitems += 1
+                            consecutive_fails = 0
+                            status['message'] = 'Search at {:6f},{:6f} completed with {} finds.'.format(
+                                step_location[0], step_location[1], parsed['count'])
+                            log.debug(status['message'])
+                            log.info(status['message'])
                 except Exception as e:
                     parsed = False
                     status['fail'] += 1

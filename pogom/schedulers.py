@@ -720,8 +720,8 @@ class SpeedScan(HexSearch):
                 for k in sorted(kinds.keys()):
                     log.info('%s kind spawns: %d or %.1f%%', k,
                              kinds[k], kinds[k] * 100.0 / self.active_sp)
-                log.info('Spawns with found TTH: %d or %.1f%%',
-                         self.tth_found, self.tth_found * 100.0 / self.active_sp)
+                log.info('Spawns with found TTH: %d or %.1f%% [%d unknown]',
+                         self.tth_found, self.tth_found * 100.0 / self.active_sp, self.active_sp - self.tth_found)
                 for k in sorted(tth_ranges.keys(), key=int):
                     log.info(
                         'Spawnpoints with a %sm range to find TTH: %d', k, tth_ranges[k])
@@ -771,8 +771,8 @@ class SpeedScan(HexSearch):
                     log.warning('Missed scans: %s', Counter(
                         self.scans_missed_list).most_common(3))
                     log.info('History: %s', str(self.scan_percent).strip('[]'))
-                self.status_message = 'Initial scan: {:.2f}%, TTH found: {:.2f}%, '.format(
-                    band_percent, self.tth_found * 100.0 / self.active_sp)
+                self.status_message = 'Initial scan: {:.2f}%, TTH found: {:.2f}% [{} unknown], '.format(
+                    band_percent, self.tth_found * 100.0 / self.active_sp, self.active_sp - self.tth_found)
                 self.status_message += 'Spawns reached: {:.2f}%, Spawns found: {:.2f}%, Good scans {:.2f}%'\
                     .format(spawns_reached, found_percent, good_percent)
                 self._stat_init()
@@ -984,7 +984,12 @@ class KeyScheduler(object):
 
     def __init__(self, keys):
         self.keys = keys
+        self.key_cycle = itertools.cycle(self.keys)
+        self.curr_key = ''
 
-    def scheduler(self):
-        cycle = itertools.cycle(self.keys)
-        return cycle
+    def current_key(self):
+        return self.curr_key
+
+    def next(self):
+        self.curr_key = self.key_cycle.next()
+        return self.curr_key
