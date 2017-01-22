@@ -1421,7 +1421,7 @@ class SpawnpointDetectionData(BaseModel):
 
         cls.classify_1x60(query, sp)
 
-        @classmethod
+    @classmethod
     def classify_1x60(cls, query, sp):
         # find all sights and organize them by encounter id
         sights_by_encounter = {}
