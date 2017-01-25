@@ -228,6 +228,9 @@ def get_args():
                         help='Factor (in seconds) by which the delay until next retry will increase.', type=float, default=0.25)
     parser.add_argument('-whlfu', '--wh-lfu-size',
                         help='Webhook LFU cache max size.', type=int, default=1000)
+    parser.add_argument('-whsu', '--webhook-scheduler-updates',
+                        help='Send webhook updates with scheduler status (use with -wh).',
+                        action='store_true', default=False)
     parser.add_argument('--ssl-certificate',
                         help='Path to SSL certificate file.')
     parser.add_argument('--ssl-privatekey',
@@ -451,6 +454,10 @@ def get_args():
         else:
             args.scheduler = 'HexSearch'
 
+        # Disable webhook scheduler updates if webhooks are disabled
+        if args.webhooks is None:
+            args.webhook_scheduler_updates = False
+            
     return args
 
 
