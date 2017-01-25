@@ -10,9 +10,9 @@ from math import asin, atan, cos, exp, log, pi, sin, sqrt, tan
 log = logging.getLogger(__name__)
 
 def spin_pokestop(api, position, pokestops):
-    if random.randint(0,100) < 90:
-        log.info("SKIPPPED POKESTOP!")
-        return
+    #if random.randint(0,100) < 90:
+    #    log.info("SKIPPED POKESTOP!")
+    #    return
     pokestops_in_range = get_forts_in_range(pokestops, position)
     SPIN_REQUEST_RESULT_SUCCESS = 1
     SPIN_REQUEST_RESULT_OUT_OF_RANGE = 2
