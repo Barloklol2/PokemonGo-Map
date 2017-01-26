@@ -1010,9 +1010,9 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
         #except NotLoggedInException as e:
         #    log.error(e)
         #    account_queue.put(account)
-        #except HashingOfflineException as e:
-        #    log.error(e)
-        #    account_queue.put(account)
+        except HashingOfflineException as e:
+            log.error(e)
+            account_queue.put(account)
         except Exception as e:
             log.error('Exception in search_worker under account {} Exception message: {}.'.format(
                 account['username'], e))
