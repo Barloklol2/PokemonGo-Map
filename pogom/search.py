@@ -907,9 +907,7 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
                                 maximum = HashServer.status.get('maximum')
                                 status['maximum_rpm'] = maximum
                                 try:
-                                    request = api.create_request()
                                     remaining = HashServer.status.get('remaining')
-                                    request.call()
                                     status['rpm_left'] = remaining
                                     log.info('Hash Key {} has {}/{} RPM left.'.format(key, remaining, maximum))
                                 except HashingQuotaExceededException:
